@@ -9,8 +9,10 @@ import Foundation
 
 final class MainViewModel: ObservableObject {
     
-    @Published var allAnimals: [Animal] = [Animal(id: 0, name: "Cat", image: .cat, backgroundColor: .cat), Animal(id: 1, name: "Dog", image: .dog, backgroundColor: .dog)]
     @Published var fromHumanToPet = true
-    @Published var animalSelectedId: Int = 0
+    @Published var dogIsSelected: Bool = true
+    
+    @Published var recording: Bool? = false
+    @Published var selectedMainScreen: Bool = true
     
 }
