@@ -10,78 +10,85 @@ import SwiftUI
 struct MainView: View {
     
     @StateObject private var vm = MainViewModel()
+    @State private var headerText: HeaderOptions = .translate
     
     var body: some View {
-        ZStack {
-            LinearGradient(colors: [.green.opacity(0.01), .green.opacity(0.4)], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-            
-            header
-            
-            tabBar
-            
-            VStack(spacing: 24) {
-                controlsSection
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 16)
+        NavigationStack {
+            ZStack {
+                LinearGradient(colors: [.green.opacity(0.01), .green.opacity(0.4)], startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
                 
-                if vm.dogIsSelected {
-                    VStack {
-                        Image(.dog)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 184)
-                            .padding(.top, 36)
+                header
+                
+                if vm.selectedMainScreen {
+                    VStack(spacing: 24) {
+                        controlsSection
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 16)
+                        
+                        selectedAnimal
+                        
                     }
-                    .frame(maxWidth: .infinity)
-                    .transition(.move(edge: .trailing))
-                } else {
-                    VStack {
-                        Image(.cat)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 184)
-                            .padding(.top, 36)
-                            .transition(.move(edge: .leading))
-                    }
-                    .frame(maxWidth: .infinity)
+                    .animation(.easeInOut, value: vm.dogIsSelected)
                     .transition(.move(edge: .leading))
+                } else {
+                    settings
+                        .padding(.horizontal, 16)
+                        .padding(.top, 96)
+                        .transition(.move(edge: .trailing))
                 }
                 
+                tabBar
+                
             }
-            .animation(.easeInOut, value: vm.dogIsSelected)
-            
         }
     }
     
     private var header: some View {
         VStack(spacing: 36) {
-            Text("Translator")
+            Text(headerText.rawValue.capitalized)
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                
+                .frame(maxWidth: .infinity, alignment: .center)
+                .overlay(alignment: .leading) {
+                    if vm.recording == nil {
+                        Button {
+                           //close
+                        } label: {
+                            Image(.close)
+                                .padding(8)
+                                .background(.white)
+                                .clipShape(.circle)
+                                .padding(.leading, 16)
+                            
+                        }
+                        .transition(.move(edge: .leading))
+                    }
+                }
+                .animation(.none, value: vm.selectedMainScreen)
             
-            HStack(spacing: 0) {
-                Text(vm.fromHumanToPet ? "HUMAN" : "PET")
-                    .frame(maxWidth: .infinity)
-                    //.background(.red)
-                
-                Image(.arrowSwapHorizontal)
-                
-                Text(vm.fromHumanToPet ? "PET" : "HUMAN")
-                    .frame(maxWidth: .infinity)
-                    //.background(.red)
+            if vm.selectedMainScreen {
+                HStack(spacing: 0) {
+                    Text(vm.fromHumanToPet ? "HUMAN" : "PET")
+                        .frame(maxWidth: .infinity)
+                    
+                    Image(.arrowSwapHorizontal)
+                    
+                    Text(vm.fromHumanToPet ? "PET" : "HUMAN")
+                        .frame(maxWidth: .infinity)
+                }
+                .font(.headline)
+                .fontWeight(.bold)
+                .onTapGesture {
+                    vm.fromHumanToPet.toggle()
+                }
+                .padding(.horizontal, 40)
+                .transition(.move(edge: .leading))
             }
-            .font(.headline)
-            .fontWeight(.bold)
-            .onTapGesture {
-                vm.fromHumanToPet.toggle()
-            }
-            
             Spacer()
         }
         .padding(.top, 24)
-        .padding(.horizontal, 40)
+
     }
     
     private var tabBar: some View {
@@ -94,6 +101,7 @@ struct MainView: View {
                         if !vm.selectedMainScreen {
                             withAnimation {
                                 vm.selectedMainScreen = true
+                                headerText = .translate
                             }
                         }
                     }
@@ -103,6 +111,7 @@ struct MainView: View {
                         if vm.selectedMainScreen {
                             withAnimation {
                                 vm.selectedMainScreen = false
+                                headerText = .settings
                             }
                         }
                     }
@@ -143,7 +152,6 @@ struct MainView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
                     .frame(maxHeight: .infinity)
-                    
                 }
             }
             .frame(width: 163)
@@ -184,6 +192,45 @@ struct MainView: View {
             .shadow(radius: 5)
         }
         .frame(height: 176)
+    }
+    
+    @ViewBuilder
+    private var selectedAnimal: some View {
+        if vm.dogIsSelected {
+            VStack {
+                Image(.dog)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 184)
+                    .padding(.top, 36)
+            }
+            .frame(maxWidth: .infinity)
+            .transition(.move(edge: .trailing))
+        } else {
+            VStack {
+                Image(.cat)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 184)
+                    .padding(.top, 36)
+                    .transition(.move(edge: .leading))
+            }
+            .frame(maxWidth: .infinity)
+            .transition(.move(edge: .leading))
+        }
+    }
+    
+    private var settings: some View {
+        VStack(spacing: 14) {
+            
+            ForEach(vm.settingOption) { setting in
+                NavigationLink(destination: setting.destination) {
+                    SettingsRow(setting: setting)
+                }
+            }
+            
+            Spacer()
+        }
     }
     
 }
