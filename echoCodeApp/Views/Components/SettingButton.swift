@@ -12,7 +12,7 @@ struct SettingButton: View {
     let image: ImageResource
     let text: String
     
-    var isSelected: Bool
+    var isSelected: Bool?
     
     var body: some View {
         VStack(spacing: 4) {
@@ -22,7 +22,7 @@ struct SettingButton: View {
                 .font(.caption)
                 .fontWeight(.medium)
         }
-        .opacity(isSelected ? 1.0 : 0.5)
+        .opacity(isSelected == true ? 1.0 : 0.5)
     }
 }
 

@@ -29,13 +29,11 @@ struct GifView: UIViewRepresentable {
             
             webView.scrollView.isScrollEnabled = false
             webView.isOpaque = false
-            webView.backgroundColor = .white
+            webView.backgroundColor = .clear
         } catch {
             print(error.localizedDescription)
         }
         
-        print(webView.frame.width)
-        print(webView.frame.height)
         return webView
     }
     

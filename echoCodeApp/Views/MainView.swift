@@ -25,6 +25,7 @@ struct MainView: View {
                         controlsSection
                             .padding(.horizontal, 24)
                             .padding(.vertical, 16)
+                            .opacity(vm.results ? 0.0 : 1.0)
                         
                         selectedAnimal
                         
@@ -39,8 +40,20 @@ struct MainView: View {
                 }
                 
                 tabBar
+                    .opacity(vm.results ? 0.0 : 1.0)
                 
             }
+            .alert("To use app give recording permission", isPresented: $vm.showAlert) {
+                Button("Cancel") { }
+                
+                Button {
+                    vm.openSettings()
+                } label: {
+                    Text("Settings")
+                        .font(.headline)
+                }
+            }
+
         }
     }
     
@@ -53,7 +66,9 @@ struct MainView: View {
                 .overlay(alignment: .leading) {
                     if vm.recording == nil {
                         Button {
-                           //close
+                            vm.recording = false
+                            vm.results = false
+                            headerText = .translate
                         } label: {
                             Image(.close)
                                 .padding(8)
@@ -83,6 +98,7 @@ struct MainView: View {
                     vm.fromHumanToPet.toggle()
                 }
                 .padding(.horizontal, 40)
+                .opacity(vm.results ? 0.0 : 1.0)
                 .transition(.move(edge: .leading))
             }
             Spacer()
@@ -161,9 +177,13 @@ struct MainView: View {
             .onTapGesture {
                 withAnimation {
                     if vm.recording == true {
-                        vm.recording = false
-                    } else {
+                        vm.recording = nil
+                        vm.stopRecording()
+                        headerText = .result
+                        vm.results = true
+                    } else if vm.recording == false {
                         vm.recording = true
+                        vm.startRecording()
                     }
                 }
             }
