@@ -14,6 +14,7 @@ enum HeaderOptions: String {
     case settings
 }
 
+@MainActor
 final class MainViewModel: ObservableObject {
     
     let settingOption: [Setting] = [
@@ -33,9 +34,11 @@ final class MainViewModel: ObservableObject {
     @Published var recording: Bool? = false
     @Published var selectedMainScreen: Bool = true
     
-    @Published var results: Bool = false
+    @Published var results: Bool? = false
     
     @Published var showAlert: Bool = false
+    @Published var showRepeatButton: Bool = false
+    @Published var headerText: HeaderOptions = .translate
     
     func openSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -43,9 +46,32 @@ final class MainViewModel: ObservableObject {
         }
     }
     
-    func startRecording() {
+    func onCloseButtonPressed() {
+        recording = false
+        results = false
+        headerText = .translate
+        showRepeatButton = false
+    }
+    
+    func onSpeakButtonPressed() {
+        withAnimation {
+            if recording == true {
+                recording = nil
+                stopRecording()
+                headerText = .result
+                Task {
+                    await processing()
+                }
+            } else if recording == false {
+                startRecording()
+            }
+        }
+    }
+    
+    private func startRecording() {
         recognizer.checkSpeechPermission { granted in
             if granted {
+                self.recording = true
                 self.recognizer.startTranscribing()
             } else {
                 self.showAlert = true
@@ -55,6 +81,23 @@ final class MainViewModel: ObservableObject {
     
     func stopRecording() {
         recognizer.stopTranscribing()
+        if fromHumanToPet {
+            if dogIsSelected {
+                recognizer.recognizedText = "Woof woof woof"
+            } else {
+                recognizer.recognizedText = "Mew mew mew"
+            }
+        } else {
+            recognizer.recognizedText = recognizer.petNeeds.randomElement() ?? ""
+        }
+    }
+    
+    private func processing() async {
+        results = nil
+        try? await Task.sleep(for: .seconds(2))
+        if recording != false {
+            results = true
+        }
     }
     
 }

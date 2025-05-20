@@ -10,7 +10,6 @@ import SwiftUI
 struct MainView: View {
     
     @StateObject private var vm = MainViewModel()
-    @State private var headerText: HeaderOptions = .translate
     
     var body: some View {
         NavigationStack {
@@ -22,16 +21,40 @@ struct MainView: View {
                 
                 if vm.selectedMainScreen {
                     VStack(spacing: 24) {
-                        controlsSection
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 16)
-                            .opacity(vm.results ? 0.0 : 1.0)
+                        VStack {
+                            if vm.results == true {
+                                ZStack(alignment: .bottom) {
+
+                                    RepeatButton(showRepeatButton: $vm.showRepeatButton, repeatButtonPressed: vm.onCloseButtonPressed)
+                                    
+                                    TranslationView(translatedText: vm.recognizer.recognizedText)
+                                        .offset(y: -5)
+                                        .opacity(vm.showRepeatButton ? 0 : 1)
+                                        .onTapGesture {
+                                            vm.showRepeatButton.toggle()
+                                        }
+                                }
+                            } else if vm.results == nil {
+                                Text("Process of translation...")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .offset(y: 70)
+                            } else {
+                                controlsSection
+                            }
+                        }
+                        .frame(height: 176)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 16)
+                        .animation(.easeInOut, value: vm.showRepeatButton)
+                        
                         
                         selectedAnimal
                         
                     }
                     .animation(.easeInOut, value: vm.dogIsSelected)
                     .transition(.move(edge: .leading))
+                    
                 } else {
                     settings
                         .padding(.horizontal, 16)
@@ -40,9 +63,10 @@ struct MainView: View {
                 }
                 
                 tabBar
-                    .opacity(vm.results ? 0.0 : 1.0)
+                    .opacity(vm.results == true ? 0.0 : 1.0)
                 
             }
+            .animation(.default, value: vm.results)
             .alert("To use app give recording permission", isPresented: $vm.showAlert) {
                 Button("Cancel") { }
                 
@@ -55,20 +79,19 @@ struct MainView: View {
             }
 
         }
+        .preferredColorScheme(.light)
     }
     
     private var header: some View {
         VStack(spacing: 36) {
-            Text(headerText.rawValue.capitalized)
+            Text(vm.headerText.rawValue.capitalized)
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .overlay(alignment: .leading) {
                     if vm.recording == nil {
                         Button {
-                            vm.recording = false
-                            vm.results = false
-                            headerText = .translate
+                            vm.onCloseButtonPressed()
                         } label: {
                             Image(.close)
                                 .padding(8)
@@ -98,7 +121,7 @@ struct MainView: View {
                     vm.fromHumanToPet.toggle()
                 }
                 .padding(.horizontal, 40)
-                .opacity(vm.results ? 0.0 : 1.0)
+                .opacity(vm.results != false ? 0.0 : 1.0)
                 .transition(.move(edge: .leading))
             }
             Spacer()
@@ -117,7 +140,7 @@ struct MainView: View {
                         if !vm.selectedMainScreen {
                             withAnimation {
                                 vm.selectedMainScreen = true
-                                headerText = .translate
+                                vm.headerText = .translate
                             }
                         }
                     }
@@ -127,7 +150,7 @@ struct MainView: View {
                         if vm.selectedMainScreen {
                             withAnimation {
                                 vm.selectedMainScreen = false
-                                headerText = .settings
+                                vm.headerText = .settings
                             }
                         }
                     }
@@ -136,6 +159,7 @@ struct MainView: View {
             .background(.white)
             .clipShape(.rect(cornerRadius: 16))
         }
+        .shadow(radius: 5)
     }
     
     private var controlsSection: some View {
@@ -175,17 +199,7 @@ struct MainView: View {
             .clipShape(.rect(cornerRadius: 16))
             .shadow(radius: 5)
             .onTapGesture {
-                withAnimation {
-                    if vm.recording == true {
-                        vm.recording = nil
-                        vm.stopRecording()
-                        headerText = .result
-                        vm.results = true
-                    } else if vm.recording == false {
-                        vm.recording = true
-                        vm.startRecording()
-                    }
-                }
+                vm.onSpeakButtonPressed()
             }
             
             VStack(spacing: 12) {
@@ -211,7 +225,6 @@ struct MainView: View {
             .clipShape(.rect(cornerRadius: 16))
             .shadow(radius: 5)
         }
-        .frame(height: 176)
     }
     
     @ViewBuilder
